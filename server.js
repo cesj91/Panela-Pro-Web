@@ -1,23 +1,28 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 require("dotenv").config();
+
 require("./backend/config/database");
+
+const authRoutes = require("./backend/routes/auth.routes");
 
 const app = express();
 
-// Configuración
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Ruta de prueba
+app.use(express.static(path.join(__dirname, "frontend")));
+
+app.use("/api/auth", authRoutes);
+
 app.get("/", (req, res) => {
-    res.send("🚀 Bienvenido a Panela Pro Web");
+    res.sendFile(path.join(__dirname, "frontend", "index.html"));
 });
 
-// Puerto
 const PORT = process.env.PORT || 3000;
 
-// Iniciar servidor
 app.listen(PORT, () => {
     console.log(`Servidor ejecutándose en http://localhost:${PORT}`);
 });
