@@ -7,6 +7,10 @@ require("./backend/config/database");
 
 const authRoutes = require("./backend/routes/auth.routes");
 const usuarioRoutes = require("./backend/routes/usuario.routes");
+const clienteRoutes = require("./backend/routes/cliente.routes");
+const productoRoutes = require("./backend/routes/producto.routes");
+const proveedorRoutes=require("./backend/routes/proveedor.routes");
+const inventarioRoutes=require("./backend/routes/inventario.routes");
 
 const app = express();
 
@@ -18,6 +22,10 @@ app.use(express.static(path.join(__dirname, "frontend")));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/usuarios", usuarioRoutes);
+app.use("/api/clientes", clienteRoutes);
+app.use("/api/productos", productoRoutes);
+app.use("/api/proveedores",proveedorRoutes);
+app.use("/api/inventario",inventarioRoutes);
 
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "frontend", "index.html"));

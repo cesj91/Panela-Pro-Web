@@ -1,11 +1,12 @@
-const Usuario = require("../models/usuario.model");
+const Producto = require("../models/producto.model");
 
 exports.listar = (req, res) => {
-    Usuario.obtenerTodos((error, resultados) => {
+
+    Producto.obtenerTodos((error, resultados) => {
 
         if (error) {
             return res.status(500).json({
-                mensaje: "Error al listar usuarios",
+                mensaje: "Error al listar productos",
                 error
             });
         }
@@ -13,21 +14,22 @@ exports.listar = (req, res) => {
         res.json(resultados);
 
     });
+
 };
 
 exports.crear = (req, res) => {
 
-    Usuario.crear(req.body, (error, resultado) => {
+    Producto.crear(req.body, (error, resultado) => {
 
         if (error) {
             return res.status(500).json({
-                mensaje: "Error al crear usuario",
+                mensaje: "Error al crear producto",
                 error
             });
         }
 
         res.status(201).json({
-            mensaje: "Usuario creado correctamente",
+            mensaje: "Producto creado correctamente",
             id: resultado.insertId
         });
 
@@ -37,17 +39,17 @@ exports.crear = (req, res) => {
 
 exports.actualizar = (req, res) => {
 
-    Usuario.actualizar(req.params.id, req.body, (error) => {
+    Producto.actualizar(req.params.id, req.body, (error) => {
 
         if (error) {
             return res.status(500).json({
-                mensaje: "Error al actualizar usuario",
+                mensaje: "Error al actualizar producto",
                 error
             });
         }
 
         res.json({
-            mensaje: "Usuario actualizado correctamente"
+            mensaje: "Producto actualizado correctamente"
         });
 
     });
@@ -56,17 +58,17 @@ exports.actualizar = (req, res) => {
 
 exports.eliminar = (req, res) => {
 
-    Usuario.eliminar(req.params.id, (error) => {
+    Producto.eliminar(req.params.id, (error) => {
 
         if (error) {
             return res.status(500).json({
-                mensaje: "Error al eliminar usuario",
+                mensaje: "Error al eliminar producto",
                 error
             });
         }
 
         res.json({
-            mensaje: "Usuario eliminado correctamente"
+            mensaje: "Producto eliminado correctamente"
         });
 
     });

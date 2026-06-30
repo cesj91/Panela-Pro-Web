@@ -4,96 +4,145 @@ if (!token) {
     window.location.href = "../index.html";
 }
 
+let usuarios = [];
+let idEditar = null;
+
 async function cargarUsuarios() {
+
+    const respuesta = await fetch("http://localhost:3000/api/usuarios");
+    usuarios = await respuesta.json();
+
     const tabla = document.getElementById("tablaUsuarios");
+    tabla.innerHTML = "";
 
-    try {
-        const respuesta = await fetch("http://localhost:3000/api/usuarios");
-        const usuarios = await respuesta.json();
+    usuarios.forEach(u => {
 
-        tabla.innerHTML = "";
-
-        usuarios.forEach(usuario => {
-            tabla.innerHTML += `
-                <tr>
-                    <td>${usuario.id_usuario}</td>
-                    <td>${usuario.nombre}</td>
-                    <td>${usuario.usuario}</td>
-                    <td>${usuario.correo}</td>
-                    <td>${usuario.nombre_rol}</td>
-                    <td>
-                        <span class="badge ${usuario.estado === "Activo" ? "bg-success" : "bg-secondary"}">
-                            ${usuario.estado}
-                        </span>
-                    </td>
-                </tr>
-            `;
-        });
-
-    } catch (error) {
-        tabla.innerHTML = `
+        tabla.innerHTML += `
             <tr>
-                <td colspan="6" class="text-center text-danger">
-                    Error al cargar usuarios
+                <td>${u.id_usuario}</td>
+                <td>${u.nombre}</td>
+                <td>${u.usuario}</td>
+                <td>${u.correo}</td>
+                <td>${u.nombre_rol}</td>
+                <td>${u.estado}</td>
+
+                <td>
+
+                    <button class="btn btn-warning btn-sm"
+                        onclick="editarUsuario(${u.id_usuario})">
+
+                        Editar
+
+                    </button>
+
+                    <button class="btn btn-danger btn-sm ms-2"
+                        onclick="eliminarUsuario(${u.id_usuario})">
+
+                        Eliminar
+
+                    </button>
+
                 </td>
+
             </tr>
         `;
-    }
+
+    });
+
 }
 
-document.getElementById("formUsuario").addEventListener("submit", async function(e) {
+function editarUsuario(id){
+
+    const usuario = usuarios.find(x => x.id_usuario == id);
+
+    idEditar = id;
+
+    document.getElementById("nombre").value = usuario.nombre;
+    document.getElementById("correo").value = usuario.correo;
+    document.getElementById("usuario").value = usuario.usuario;
+    document.getElementById("contrasena").value = "";
+    document.getElementById("id_rol").value = usuario.id_rol;
+    document.getElementById("estado").value = usuario.estado;
+
+    new bootstrap.Modal(document.getElementById("modalUsuario")).show();
+
+}
+
+document.getElementById("formUsuario").addEventListener("submit", async(e)=>{
+
     e.preventDefault();
 
     const datos = {
-        nombre: document.getElementById("nombre").value,
-        correo: document.getElementById("correo").value,
-        usuario: document.getElementById("usuario").value,
-        contrasena: document.getElementById("contrasena").value,
-        id_rol: document.getElementById("id_rol").value,
-        estado: document.getElementById("estado").value
+
+        nombre:document.getElementById("nombre").value,
+        correo:document.getElementById("correo").value,
+        usuario:document.getElementById("usuario").value,
+        contrasena:document.getElementById("contrasena").value,
+        id_rol:document.getElementById("id_rol").value,
+        estado:document.getElementById("estado").value
+
     };
 
-    const mensaje = document.getElementById("mensajeUsuario");
+    if(idEditar==null){
 
-    try {
-        const respuesta = await fetch("http://localhost:3000/api/usuarios", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
+        await fetch("http://localhost:3000/api/usuarios",{
+
+            method:"POST",
+
+            headers:{
+                "Content-Type":"application/json"
             },
-            body: JSON.stringify(datos)
+
+            body:JSON.stringify(datos)
+
         });
 
-        const resultado = await respuesta.json();
+    }else{
 
-        if (!respuesta.ok) {
-            mensaje.style.color = "red";
-            mensaje.textContent = resultado.mensaje || "Error al guardar";
-            return;
-        }
+        await fetch(`http://localhost:3000/api/usuarios/${idEditar}`,{
 
-        mensaje.style.color = "green";
-        mensaje.textContent = "Usuario guardado correctamente";
+            method:"PUT",
 
-        document.getElementById("formUsuario").reset();
-        cargarUsuarios();
+            headers:{
+                "Content-Type":"application/json"
+            },
 
-        setTimeout(() => {
-            const modal = bootstrap.Modal.getInstance(document.getElementById("modalUsuario"));
-            modal.hide();
-            mensaje.textContent = "";
-        }, 800);
+            body:JSON.stringify(datos)
 
-    } catch (error) {
-        mensaje.style.color = "red";
-        mensaje.textContent = "Error de conexión con el servidor";
+        });
+
+        idEditar=null;
+
     }
+
+    document.getElementById("formUsuario").reset();
+
+    bootstrap.Modal.getInstance(document.getElementById("modalUsuario")).hide();
+
+    cargarUsuarios();
+
 });
 
-function cerrarSesion() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("usuario");
-    window.location.href = "../index.html";
+async function eliminarUsuario(id){
+
+    if(!confirm("¿Desea eliminar este usuario?")) return;
+
+    await fetch(`http://localhost:3000/api/usuarios/${id}`,{
+
+        method:"DELETE"
+
+    });
+
+    cargarUsuarios();
+
+}
+
+function cerrarSesion(){
+
+    localStorage.clear();
+
+    window.location="../index.html";
+
 }
 
 cargarUsuarios();

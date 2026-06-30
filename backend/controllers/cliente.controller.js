@@ -1,33 +1,39 @@
-const Usuario = require("../models/usuario.model");
+const Cliente = require("../models/cliente.model");
 
 exports.listar = (req, res) => {
-    Usuario.obtenerTodos((error, resultados) => {
+
+    Cliente.obtenerTodos((error, resultados) => {
 
         if (error) {
+
             return res.status(500).json({
-                mensaje: "Error al listar usuarios",
+                mensaje: "Error al listar clientes",
                 error
             });
+
         }
 
         res.json(resultados);
 
     });
+
 };
 
 exports.crear = (req, res) => {
 
-    Usuario.crear(req.body, (error, resultado) => {
+    Cliente.crear(req.body, (error, resultado) => {
 
         if (error) {
+
             return res.status(500).json({
-                mensaje: "Error al crear usuario",
+                mensaje: "Error al crear cliente",
                 error
             });
+
         }
 
         res.status(201).json({
-            mensaje: "Usuario creado correctamente",
+            mensaje: "Cliente creado correctamente",
             id: resultado.insertId
         });
 
@@ -37,17 +43,19 @@ exports.crear = (req, res) => {
 
 exports.actualizar = (req, res) => {
 
-    Usuario.actualizar(req.params.id, req.body, (error) => {
+    Cliente.actualizar(req.params.id, req.body, (error) => {
 
         if (error) {
+
             return res.status(500).json({
-                mensaje: "Error al actualizar usuario",
+                mensaje: "Error al actualizar cliente",
                 error
             });
+
         }
 
         res.json({
-            mensaje: "Usuario actualizado correctamente"
+            mensaje: "Cliente actualizado correctamente"
         });
 
     });
@@ -56,17 +64,19 @@ exports.actualizar = (req, res) => {
 
 exports.eliminar = (req, res) => {
 
-    Usuario.eliminar(req.params.id, (error) => {
+    Cliente.eliminar(req.params.id, (error) => {
 
         if (error) {
+
             return res.status(500).json({
-                mensaje: "Error al eliminar usuario",
+                mensaje: "Error al eliminar cliente",
                 error
             });
+
         }
 
         res.json({
-            mensaje: "Usuario eliminado correctamente"
+            mensaje: "Cliente eliminado correctamente"
         });
 
     });
