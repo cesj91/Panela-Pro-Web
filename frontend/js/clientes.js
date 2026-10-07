@@ -7,58 +7,86 @@ if (!token) {
 let clientes = [];
 let idEditar = null;
 
+
+// ===============================
+// CARGAR CLIENTES
+// ===============================
+
 async function cargarClientes() {
 
-    const respuesta = await fetch("http://localhost:3000/api/clientes");
-    clientes = await respuesta.json();
+    try {
 
-    const tabla = document.getElementById("tablaClientes");
+        const respuesta = await fetch("/api/clientes");
 
-    tabla.innerHTML = "";
+        if (!respuesta.ok) {
+            throw new Error("Error al consultar clientes");
+        }
 
-    clientes.forEach(c => {
+        clientes = await respuesta.json();
 
-        tabla.innerHTML += `
-            <tr>
+        const tabla = document.getElementById("tablaClientes");
 
-                <td>${c.id_cliente}</td>
-                <td>${c.nombre}</td>
-                <td>${c.documento}</td>
-                <td>${c.telefono}</td>
-                <td>${c.correo}</td>
-                <td>${c.direccion}</td>
-                <td>${c.estado}</td>
+        tabla.innerHTML = "";
 
-                <td>
+        clientes.forEach(c => {
 
-                    <button
-                        class="btn btn-warning btn-sm"
-                        onclick="editarCliente(${c.id_cliente})">
+            tabla.innerHTML += `
+                <tr>
 
-                        Editar
+                    <td>${c.id_cliente}</td>
+                    <td>${c.nombre}</td>
+                    <td>${c.documento}</td>
+                    <td>${c.telefono}</td>
+                    <td>${c.correo}</td>
+                    <td>${c.direccion}</td>
+                    <td>${c.estado}</td>
 
-                    </button>
+                    <td>
 
-                    <button
-                        class="btn btn-danger btn-sm ms-2"
-                        onclick="eliminarCliente(${c.id_cliente})">
+                        <button
+                            class="btn btn-warning btn-sm"
+                            onclick="editarCliente(${c.id_cliente})">
 
-                        Eliminar
+                            Editar
 
-                    </button>
+                        </button>
 
-                </td>
+                        <button
+                            class="btn btn-danger btn-sm ms-2"
+                            onclick="eliminarCliente(${c.id_cliente})">
 
-            </tr>
-        `;
+                            Eliminar
 
-    });
+                        </button>
+
+                    </td>
+
+                </tr>
+            `;
+
+        });
+
+    } catch (error) {
+
+        console.error("Error cargando clientes:", error);
+
+    }
 
 }
 
-function editarCliente(id){
+
+// ===============================
+// EDITAR CLIENTE
+// ===============================
+
+function editarCliente(id) {
 
     const cliente = clientes.find(c => c.id_cliente == id);
+
+    if (!cliente) {
+        alert("Cliente no encontrado");
+        return;
+    }
 
     idEditar = id;
 
@@ -69,85 +97,146 @@ function editarCliente(id){
     document.getElementById("direccion").value = cliente.direccion;
     document.getElementById("estado").value = cliente.estado;
 
-    new bootstrap.Modal(document.getElementById("modalCliente")).show();
+    new bootstrap.Modal(
+        document.getElementById("modalCliente")
+    ).show();
 
 }
 
-document.getElementById("formCliente").addEventListener("submit", async function(e){
 
-    e.preventDefault();
+// ===============================
+// CREAR / ACTUALIZAR CLIENTE
+// ===============================
 
-    const datos = {
+document.getElementById("formCliente").addEventListener(
+    "submit",
+    async function(e) {
 
-        nombre: document.getElementById("nombre").value,
-        documento: document.getElementById("documento").value,
-        telefono: document.getElementById("telefono").value,
-        correo: document.getElementById("correo").value,
-        direccion: document.getElementById("direccion").value,
-        estado: document.getElementById("estado").value
+        e.preventDefault();
 
-    };
+        const datos = {
 
-    if(idEditar == null){
+            nombre: document.getElementById("nombre").value,
+            documento: document.getElementById("documento").value,
+            telefono: document.getElementById("telefono").value,
+            correo: document.getElementById("correo").value,
+            direccion: document.getElementById("direccion").value,
+            estado: document.getElementById("estado").value
 
-        await fetch("http://localhost:3000/api/clientes",{
+        };
 
-            method:"POST",
+        try {
 
-            headers:{
-                "Content-Type":"application/json"
-            },
+            let respuesta;
 
-            body:JSON.stringify(datos)
+            if (idEditar == null) {
+
+                respuesta = await fetch("/api/clientes", {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify(datos)
+
+                });
+
+            } else {
+
+                respuesta = await fetch(`/api/clientes/${idEditar}`, {
+
+                    method: "PUT",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify(datos)
+
+                });
+
+            }
+
+            if (!respuesta.ok) {
+                throw new Error("Error al guardar cliente");
+            }
+
+            idEditar = null;
+
+            document.getElementById("formCliente").reset();
+
+            const modal = bootstrap.Modal.getInstance(
+                document.getElementById("modalCliente")
+            );
+
+            if (modal) {
+                modal.hide();
+            }
+
+            await cargarClientes();
+
+        } catch (error) {
+
+            console.error("Error guardando cliente:", error);
+            alert("No fue posible guardar el cliente");
+
+        }
+
+    }
+);
+
+
+// ===============================
+// ELIMINAR CLIENTE
+// ===============================
+
+async function eliminarCliente(id) {
+
+    if (!confirm("¿Desea eliminar este cliente?")) {
+        return;
+    }
+
+    try {
+
+        const respuesta = await fetch(`/api/clientes/${id}`, {
+
+            method: "DELETE"
 
         });
 
-    }else{
+        if (!respuesta.ok) {
+            throw new Error("Error al eliminar cliente");
+        }
 
-        await fetch(`http://localhost:3000/api/clientes/${idEditar}`,{
+        await cargarClientes();
 
-            method:"PUT",
+    } catch (error) {
 
-            headers:{
-                "Content-Type":"application/json"
-            },
-
-            body:JSON.stringify(datos)
-
-        });
-
-        idEditar = null;
+        console.error("Error eliminando cliente:", error);
+        alert("No fue posible eliminar el cliente");
 
     }
 
-    document.getElementById("formCliente").reset();
-
-    bootstrap.Modal.getInstance(document.getElementById("modalCliente")).hide();
-
-    cargarClientes();
-
-});
-
-async function eliminarCliente(id){
-
-    if(!confirm("¿Desea eliminar este cliente?")) return;
-
-    await fetch(`http://localhost:3000/api/clientes/${id}`,{
-
-        method:"DELETE"
-
-    });
-
-    cargarClientes();
-
 }
 
-function cerrarSesion(){
+
+// ===============================
+// CERRAR SESIÓN
+// ===============================
+
+function cerrarSesion() {
 
     localStorage.clear();
 
-    window.location.href="../index.html";
+    window.location.href = "../index.html";
 
 }
+
+
+// ===============================
+// INICIAR MÓDULO
+// ===============================
 
 cargarClientes();

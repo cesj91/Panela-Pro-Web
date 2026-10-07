@@ -7,57 +7,68 @@ if (!token) {
 let productos = [];
 let idEditar = null;
 
+// ===============================
+// CARGAR PRODUCTOS
+// ===============================
+
 async function cargarProductos() {
+    try {
+        const respuesta = await fetch("/api/productos");
 
-    const respuesta = await fetch("http://localhost:3000/api/productos");
-    productos = await respuesta.json();
+        if (!respuesta.ok) {
+            throw new Error("Error al consultar productos");
+        }
 
-    const tabla = document.getElementById("tablaProductos");
-    tabla.innerHTML = "";
+        productos = await respuesta.json();
 
-    productos.forEach(p => {
+        const tabla = document.getElementById("tablaProductos");
+        tabla.innerHTML = "";
 
-        tabla.innerHTML += `
-            <tr>
-                <td>${p.id_producto}</td>
-                <td>${p.codigo}</td>
-                <td>${p.nombre}</td>
-                <td>${p.categoria}</td>
-                <td>${p.unidad_medida}</td>
-                <td>$ ${Number(p.precio).toLocaleString()}</td>
-                <td>${p.stock_minimo}</td>
-                <td>${p.estado}</td>
+        productos.forEach(p => {
+            tabla.innerHTML += `
+                <tr>
+                    <td>${p.id_producto}</td>
+                    <td>${p.codigo}</td>
+                    <td>${p.nombre}</td>
+                    <td>${p.categoria}</td>
+                    <td>${p.unidad_medida}</td>
+                    <td>$ ${Number(p.precio).toLocaleString()}</td>
+                    <td>${p.stock_minimo}</td>
+                    <td>${p.estado}</td>
+                    <td>
+                        <button
+                            class="btn btn-warning btn-sm"
+                            onclick="editarProducto(${p.id_producto})">
+                            Editar
+                        </button>
 
-                <td>
+                        <button
+                            class="btn btn-danger btn-sm ms-2"
+                            onclick="eliminarProducto(${p.id_producto})">
+                            Eliminar
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
 
-                    <button
-                        class="btn btn-warning btn-sm"
-                        onclick="editarProducto(${p.id_producto})">
-
-                        Editar
-
-                    </button>
-
-                    <button
-                        class="btn btn-danger btn-sm ms-2"
-                        onclick="eliminarProducto(${p.id_producto})">
-
-                        Eliminar
-
-                    </button>
-
-                </td>
-
-            </tr>
-        `;
-
-    });
-
+    } catch (error) {
+        console.error("Error cargando productos:", error);
+    }
 }
 
-function editarProducto(id){
 
+// ===============================
+// EDITAR PRODUCTO
+// ===============================
+
+function editarProducto(id) {
     const p = productos.find(x => x.id_producto == id);
+
+    if (!p) {
+        alert("Producto no encontrado");
+        return;
+    }
 
     idEditar = id;
 
@@ -72,87 +83,122 @@ function editarProducto(id){
     new bootstrap.Modal(
         document.getElementById("modalProducto")
     ).show();
-
 }
 
-document.getElementById("formProducto").addEventListener("submit", async function(e){
 
-    e.preventDefault();
+// ===============================
+// CREAR / ACTUALIZAR PRODUCTO
+// ===============================
 
-    const datos = {
+document.getElementById("formProducto").addEventListener(
+    "submit",
+    async function(e) {
 
-        codigo: document.getElementById("codigo").value,
-        nombre: document.getElementById("nombre").value,
-        categoria: document.getElementById("categoria").value,
-        unidad_medida: document.getElementById("unidad_medida").value,
-        precio: document.getElementById("precio").value,
-        stock_minimo: document.getElementById("stock_minimo").value,
-        estado: document.getElementById("estado").value
+        e.preventDefault();
 
-    };
+        const datos = {
+            codigo: document.getElementById("codigo").value,
+            nombre: document.getElementById("nombre").value,
+            categoria: document.getElementById("categoria").value,
+            unidad_medida: document.getElementById("unidad_medida").value,
+            precio: document.getElementById("precio").value,
+            stock_minimo: document.getElementById("stock_minimo").value,
+            estado: document.getElementById("estado").value
+        };
 
-    if(idEditar == null){
+        try {
 
-        await fetch("http://localhost:3000/api/productos",{
+            let respuesta;
 
-            method:"POST",
+            if (idEditar == null) {
 
-            headers:{
-                "Content-Type":"application/json"
-            },
+                respuesta = await fetch("/api/productos", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(datos)
+                });
 
-            body:JSON.stringify(datos)
+            } else {
 
-        });
+                respuesta = await fetch(`/api/productos/${idEditar}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(datos)
+                });
 
-    }else{
+            }
 
-        await fetch(`http://localhost:3000/api/productos/${idEditar}`,{
+            if (!respuesta.ok) {
+                throw new Error("Error al guardar el producto");
+            }
 
-            method:"PUT",
+            idEditar = null;
 
-            headers:{
-                "Content-Type":"application/json"
-            },
+            document.getElementById("formProducto").reset();
 
-            body:JSON.stringify(datos)
+            const modal = bootstrap.Modal.getInstance(
+                document.getElementById("modalProducto")
+            );
 
-        });
+            if (modal) {
+                modal.hide();
+            }
 
-        idEditar = null;
+            await cargarProductos();
 
+        } catch (error) {
+            console.error("Error guardando producto:", error);
+            alert("No fue posible guardar el producto");
+        }
+    }
+);
+
+
+// ===============================
+// ELIMINAR PRODUCTO
+// ===============================
+
+async function eliminarProducto(id) {
+
+    if (!confirm("¿Desea eliminar este producto?")) {
+        return;
     }
 
-    document.getElementById("formProducto").reset();
+    try {
 
-    bootstrap.Modal.getInstance(
-        document.getElementById("modalProducto")
-    ).hide();
+        const respuesta = await fetch(`/api/productos/${id}`, {
+            method: "DELETE"
+        });
 
-    cargarProductos();
+        if (!respuesta.ok) {
+            throw new Error("Error al eliminar producto");
+        }
 
-});
+        await cargarProductos();
 
-async function eliminarProducto(id){
-
-    if(!confirm("¿Desea eliminar este producto?")) return;
-
-    await fetch(`http://localhost:3000/api/productos/${id}`,{
-
-        method:"DELETE"
-
-    });
-
-    cargarProductos();
-
+    } catch (error) {
+        console.error("Error eliminando producto:", error);
+        alert("No fue posible eliminar el producto");
+    }
 }
 
-function cerrarSesion(){
 
+// ===============================
+// CERRAR SESIÓN
+// ===============================
+
+function cerrarSesion() {
     localStorage.clear();
-
-    window.location.href="../index.html";
-
+    window.location.href = "../index.html";
 }
+
+
+// ===============================
+// INICIAR MÓDULO
+// ===============================
 
 cargarProductos();

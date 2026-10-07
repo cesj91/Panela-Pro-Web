@@ -9,7 +9,7 @@ let idEditar = null;
 
 async function cargarUsuarios() {
 
-    const respuesta = await fetch("http://localhost:3000/api/usuarios");
+    const respuesta = await fetch("/api/usuarios");
     usuarios = await respuesta.json();
 
     const tabla = document.getElementById("tablaUsuarios");
@@ -85,7 +85,7 @@ document.getElementById("formUsuario").addEventListener("submit", async(e)=>{
 
     if(idEditar==null){
 
-        await fetch("http://localhost:3000/api/usuarios",{
+        await fetch("/api/usuarios",{
 
             method:"POST",
 
@@ -99,7 +99,7 @@ document.getElementById("formUsuario").addEventListener("submit", async(e)=>{
 
     }else{
 
-        await fetch(`http://localhost:3000/api/usuarios/${idEditar}`,{
+        await fetch(`/api/usuarios/${idEditar}`,{
 
             method:"PUT",
 
@@ -127,7 +127,7 @@ async function eliminarUsuario(id){
 
     if(!confirm("¿Desea eliminar este usuario?")) return;
 
-    await fetch(`http://localhost:3000/api/usuarios/${id}`,{
+    await fetch(`/api/usuarios/${id}`,{
 
         method:"DELETE"
 
